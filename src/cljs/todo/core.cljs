@@ -39,6 +39,7 @@
                                   (:profile/age @(pull conn '[:profile/age] id)))])
            profile-ids))]))))
 
+
 (defn mount-root []
   (r/render [page] (.getElementById js/document "app")))
 
