@@ -8,27 +8,36 @@
 
 (posh! conn)
 
-(d/transact! conn [{:db/id -1
-                    :profile/name "guilherme"
-                    :profile/age 10}
+(d/transact! conn [{:profile/name "guilherme"
+                    :profile/age 10
+                    :profile/sex :m}
                    {:profile/name "maiscedo"
-                    :profile/age 40}
+                    :profile/age 40
+                    :profile/sex :f}
                    {:profile/name "teodoro"
-                    :profile/age 40}])
+                    :profile/age 40
+                    :profile/sex :m}])
 
 (defn page []
-  (let [profile-ids @(q '[:find [?todo ...]
-                       :where [?todo :profile/name]] conn)]
-
-    [:div [:h2 "Welcome to todo"]
-     [:button {:on-click #(d/transact! conn [{:db/id -1
-                                              :profile/name "diego"
-                                              :profile/age 4}])} "+++++"]
-     (doall
-      (map
-       (fn [n]
-         ^{:key n} [:li (:profile/name @(pull conn '[*] n))])
-       profile-ids))]))
+  (let [value (r/atom nil)]
+    (fn []
+      (let [profile-ids @(q '[:find ?id ?name
+                              :where [?id :profile/name ?name]] conn)]
+        [:div [:h2 "Welcome to todo"]
+         [:input {:type "text"
+                  :value @value
+                  :on-change (fn [e]
+                               (reset! value (-> e .-target .-value)))}]
+         [:button {:on-click #(d/transact! conn [{:profile/name @value
+                                                  :profile/age 4
+                                                  :profile/sex :m}])}
+          "Adicionar"]
+         (doall
+          (map
+           (fn [[id name]]
+             ^{:key id} [:li (str name " - "
+                                  (:profile/age @(pull conn '[:profile/age] id)))])
+           profile-ids))]))))
 
 (defn mount-root []
   (r/render [page] (.getElementById js/document "app")))
